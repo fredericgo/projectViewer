@@ -19,6 +19,24 @@
   stroke: #000;
   stroke-width: 2px;
 }
+
+div.tooltip {
+  position: absolute;
+  text-align: center;
+  width: 80px;
+  height: 11px;
+  padding: 8px;
+  font: 12px sans-serif;
+  background: #fcc;
+  border: solid 1px #aaa;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.day:hover {
+	fill: orange;
+	opacity: .7;
+}
 </style>
 <html>
 <body>
@@ -36,6 +54,10 @@ var color = d3.scale.category10();
 var day = d3.time.format("%j");
 var format = d3.time.format("%Y-%m-%d");
 var formatMonth = d3.time.format("%b");
+
+var div = d3.select("body").append("div")   
+    .attr("class", "tooltip")               
+    .style("opacity", 0);
 
 d3.json("projects.json", function(error, data) {
 	var start = d3.min(data, function(d) { 
@@ -100,7 +122,21 @@ d3.json("projects.json", function(error, data) {
  	  		.attr("x", function(d) { return dayshift(d.time) * cellSize; })
  	  		.style("fill", function(d) { if(d.values) {
  	  			return color(d.values.name); }});
-
+ 	
+ 	rect.on("mouseover", function(d) {      
+            div.transition()        
+                .duration(200)      
+                .style("opacity", .9);      
+            div .html(format(d.time) + "<br/>")  
+                .style("left", (d3.event.pageX) + "px")     
+                .style("top", (d3.event.pageY - 40) + "px");    
+            })
+        .on("mouseout", function(d) {       
+            div.transition()        
+                .duration(500)      
+                .style("opacity", 0);   
+        });           
+ 	
  	var g = memberBars.selectAll(".month")
     		.data(function(d) { return d3.time.months(start, end); })
   		.enter().append("g");
@@ -112,7 +148,9 @@ d3.json("projects.json", function(error, data) {
     	.attr("transform", function(d, i) { 
     		return "translate(" + (i) * 31 * cellSize + "," + -.5*cellSize  + ")"; })
     	.text(function(d) { return formatMonth(d); });
+
 });
+
 
 function daysSince(start) {
 	return function(x) {
