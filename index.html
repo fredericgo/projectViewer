@@ -34,15 +34,18 @@ var width = 2000,
 	startingMonth = 11;
 var color = d3.scale.category10();
 var day = d3.time.format("%j");
+var format = d3.time.format("%Y-%m-%d");
 var formatMonth = d3.time.format("%b");
+
 d3.json("projects.json", function(error, data) {
 	var start = d3.min(data, function(d) { 
  		return new Date(new Date(d.time[0]).getFullYear(),
  				        new Date(d.time[0]).getMonth(), 1); });
-	console.log(start);
+
 	var end = d3.max(data, function(d) { 
  		return new Date(new Date(d.time[1]).getFullYear(),
  						new Date(d.time[1]).getMonth()+1,0); });
+
  	var projects = data.map(function(d) { return d.project; });
  	var dayshift = daysSince(start);
  	color.domain(projects);
@@ -80,12 +83,13 @@ d3.json("projects.json", function(error, data) {
     	.attr("class", "memberName")
     	.attr("transform", "translate(" + -3* cellSize + "," + cellSize  + ")")
     	.text(function(d) { return d.key; });
+
  	var rect = memberBars.selectAll(".day")
  			.data(function(d) { 
  				return d3.time.days(start, end).map(function(s) {
- 				if (s >= new Date(d.values.time[0]) && s <= new Date(d.values.time[1])) {
- 					return { time: s, values: d.values }; }
- 				else { return { time: s, values: undefined } };
+ 				if (s < format.parse(d.values.time[0]) || s > format.parse(d.values.time[1])) {
+ 					return { time: s, values: undefined }; }
+ 				else { return { time: s, values: d.values } };
  			}); })
  	  	.enter().append("rect")
  	  		.attr("class", "day")
@@ -94,6 +98,7 @@ d3.json("projects.json", function(error, data) {
  	  		.attr("x", function(d) { return dayshift(d.time) * cellSize; })
  	  		.style("fill", function(d) { if(d.values) {
  	  			return color(d.values.name); }});
+
  	var g = memberBars.selectAll(".month")
     		.data(function(d) { return d3.time.months(start, end); })
   		.enter().append("g");
@@ -106,17 +111,20 @@ d3.json("projects.json", function(error, data) {
     		return "translate(" + (i) * 31 * cellSize + "," + -.5*cellSize  + ")"; })
     	.text(function(d) { return formatMonth(d); });
 });
+
 function daysSince(start) {
 	return function(x) {
 		return (x - start) / (1000 * 3600 * 24);
 	}
 }
+
 function monthPath(t0, start) {
   	var t1 = new Date(t0.getFullYear(), t0.getMonth()+1, 0),
     d0 = +daysSince(start)(t0),
     d1 = +daysSince(start)(t1);
-  	return "M" + (d0-1) * cellSize + "," +  cellSize
-      	+ "H" +  (d1) * cellSize + "V" +  0 * cellSize
-      	+ "H" +  (d0-1) *cellSize + "V" + cellSize + "Z";
+  	return "M" + (d0) * cellSize + "," +  cellSize
+      	+ "H" +  (d1+1) * cellSize + "V" +  0 * cellSize
+      	+ "H" +  (d0) *cellSize + "V" + cellSize + "Z";
 }
+
 </script>
