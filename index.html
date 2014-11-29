@@ -1,31 +1,24 @@
 <!DOCTYPE html>
 <style>
-
 .day {
   fill: #fff;
   stroke: #ccc;
 }
-
 .memberName {
   font-size: .8em;
 }
-
 .monthName {
   font-size: .6em;
 }
-
-
 .projectName {
 	font-size: 1em;
 	font-weight: bold;
 }
-
 .month {
   fill: none;
   stroke: #000;
   stroke-width: 2px;
 }
-
 </style>
 <html>
 <body>
@@ -34,17 +27,14 @@
 </html>
 
 <script>
-
 var width = 2000, 
 	height = 136,
 	margin = { left: 50, right: 50, top: 20, bottom: 100 },
 	cellSize = 15,
 	startingMonth = 11;
-
 var color = d3.scale.category10();
 var day = d3.time.format("%j");
 var formatMonth = d3.time.format("%b");
-
 d3.json("projects.json", function(error, data) {
 	var start = d3.min(data, function(d) { 
  		return new Date(new Date(d.time[0]).getFullYear(),
@@ -54,7 +44,6 @@ d3.json("projects.json", function(error, data) {
  		return new Date(new Date(d.time[1]).getFullYear(),
  						new Date(d.time[1]).getMonth()+1,0); });
  	var projects = data.map(function(d) { return d.project; });
-
  	var dayshift = daysSince(start);
  	color.domain(projects);
  	//console.log(color.range());
@@ -62,7 +51,6 @@ d3.json("projects.json", function(error, data) {
     var projectTree = d3.nest()
  					.key(function(d) { return d.name; })
  					.entries(data);
-
  	var svg = d3.select("body").selectAll("svg")
  			.data(projectTree)
  	  	.enter().append("svg")
@@ -77,8 +65,6 @@ d3.json("projects.json", function(error, data) {
     	.style("text-anchor", "middle")
     	.attr("transform", "translate(" + cellSize + "," + cellSize  + ")")
     	.text(function(d) { return d.key; });
-
-
     var memberBars = svg.selectAll(".member")
     		.data(function(d) { return d.values[0].members.map(
     			function(s) { return {
@@ -89,18 +75,15 @@ d3.json("projects.json", function(error, data) {
     	.enter()
     	    .append("g")
     		.attr("transform", function(d, i) { return "translate(" + cellSize * 6 + "," + (i+1) * (3.5* cellSize) +")";});
-
     memberBars.append("text")
     	.style("text-anchor", "middle")
     	.attr("class", "memberName")
     	.attr("transform", "translate(" + -3* cellSize + "," + cellSize  + ")")
     	.text(function(d) { return d.key; });
-
  	var rect = memberBars.selectAll(".day")
  			.data(function(d) { 
  				return d3.time.days(start, end).map(function(s) {
  				if (s >= new Date(d.values.time[0]) && s <= new Date(d.values.time[1])) {
-
  					return { time: s, values: d.values }; }
  				else { return { time: s, values: undefined } };
  			}); })
@@ -111,31 +94,23 @@ d3.json("projects.json", function(error, data) {
  	  		.attr("x", function(d) { return dayshift(d.time) * cellSize; })
  	  		.style("fill", function(d) { if(d.values) {
  	  			return color(d.values.name); }});
-
  	var g = memberBars.selectAll(".month")
     		.data(function(d) { return d3.time.months(start, end); })
   		.enter().append("g");
-
   		g.append("path")
     		.attr("class", "month")
     		.attr("d", function(d) { return monthPath(d, start); } );
-
     	g.append("text")
     	.attr("class", "monthName")
     	.attr("transform", function(d, i) { 
     		return "translate(" + (i) * 31 * cellSize + "," + -.5*cellSize  + ")"; })
     	.text(function(d) { return formatMonth(d); });
-
 });
-
-
-
 function daysSince(start) {
 	return function(x) {
 		return (x - start) / (1000 * 3600 * 24);
 	}
 }
-
 function monthPath(t0, start) {
   	var t1 = new Date(t0.getFullYear(), t0.getMonth()+1, 0),
     d0 = +daysSince(start)(t0),
@@ -144,5 +119,4 @@ function monthPath(t0, start) {
       	+ "H" +  (d1) * cellSize + "V" +  0 * cellSize
       	+ "H" +  (d0-1) *cellSize + "V" + cellSize + "Z";
 }
-
 </script>
