@@ -54,12 +54,13 @@ d3.json("projects.json", function(error, data) {
     var projectTree = d3.nest()
  					.key(function(d) { return d.name; })
  					.entries(data);
+
  	var svg = d3.select("body").selectAll("svg")
  			.data(projectTree)
  	  	.enter().append("svg")
  			.attr("class", "name")
  			.attr("width", width)
- 			.attr("height", height)
+ 			.attr("height", function(d) { return 3 * cellSize + d.values[0].members.length * 4 * cellSize; })
  	  	.append("g")
  		  	.attr("transform", "translate(" + cellSize * 2+ "," + (1*cellSize) +")");
     
@@ -68,6 +69,7 @@ d3.json("projects.json", function(error, data) {
     	.style("text-anchor", "middle")
     	.attr("transform", "translate(" + cellSize + "," + cellSize  + ")")
     	.text(function(d) { return d.key; });
+
     var memberBars = svg.selectAll(".member")
     		.data(function(d) { return d.values[0].members.map(
     			function(s) { return {
