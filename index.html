@@ -1,19 +1,29 @@
 <!DOCTYPE html>
 <style>
-.day {
-  fill: #fff;
-  stroke: #ccc;
+
+body {
+	background-color: #fff;
 }
+
+.day {
+  fill: #eee;
+  stroke: #fff;
+  stroke-width: 1px;
+}
+
 .memberName {
   font-size: .8em;
 }
+
 .monthName {
   font-size: .6em;
 }
+
 .projectName {
 	font-size: 1em;
 	font-weight: bold;
 }
+
 .month {
   fill: none;
   stroke: #000;
@@ -26,17 +36,24 @@ div.tooltip {
   width: 80px;
   height: 11px;
   padding: 8px;
+  color: #fff;
   font: 12px sans-serif;
-  background: #fcc;
-  border: solid 1px #aaa;
-  border-radius: 8px;
+  background: #66f;
+  border: none;
+  border-radius: 5px;
   pointer-events: none;
 }
 
 .day:hover {
-	fill: orange;
+	fill: #039;
 	opacity: .7;
 }
+
+.today {
+	opacity: .3;
+	pointer-events: none;
+}
+
 </style>
 <html>
 <body>
@@ -48,7 +65,7 @@ div.tooltip {
 var width = 2000, 
 	height = 136,
 	margin = { left: 50, right: 50, top: 20, bottom: 100 },
-	cellSize = 15,
+	cellSize = 12,
 	startingMonth = 11;
 var color = d3.scale.category10();
 var day = d3.time.format("%j");
@@ -59,6 +76,9 @@ var div = d3.select("body").append("div")
     .attr("class", "tooltip")               
     .style("opacity", 0);
 
+var today = new Date();
+
+
 d3.json("projects.json", function(error, data) {
 	var start = d3.min(data, function(d) { 
  		return new Date(new Date(d.time[0]).getFullYear(),
@@ -66,13 +86,13 @@ d3.json("projects.json", function(error, data) {
 
 	var end = d3.max(data, function(d) { 
  		return new Date(new Date(d.time[1]).getFullYear(),
- 						new Date(d.time[1]).getMonth()+1,0); });
+ 						new Date(d.time[1]).getMonth()+1,1); });
 
  	var projects = data.map(function(d) { return d.project; });
  	var dayshift = daysSince(start);
+ 	
  	color.domain(projects);
- 	//console.log(color.range());
-	//projects.map(function(d) { console.log(color(d)); }); 	
+ 	 	
     var projectTree = d3.nest()
  					.key(function(d) { return d.name; })
  					.entries(data);
@@ -84,29 +104,35 @@ d3.json("projects.json", function(error, data) {
  			.attr("width", width)
  			.attr("height", function(d) { return 3 * cellSize + d.values[0].members.length * 4 * cellSize; })
  	  	.append("g")
- 		  	.attr("transform", "translate(" + cellSize * 2+ "," + (1*cellSize) +")");
+ 		  	.attr("transform", "translate(" + cellSize * 2+ "," + 0 +")");
     
     svg.append("text")
     	.attr("class", "projectName")
-    	.style("text-anchor", "middle")
+    	.style("text-anchor", "left")
     	.attr("transform", "translate(" + cellSize + "," + cellSize  + ")")
     	.text(function(d) { return d.key; });
 
     var memberBars = svg.selectAll(".member")
     		.data(function(d) { return d.values[0].members.map(
-    			function(s) { return {
-    									key: s,
-    									values: { name: d.key, time: d.values[0].time }
-    								 };
-    			}); })
-    	.enter()
-    	    .append("g")
+    			function(s) { return {  key: s,
+    									values: { name: d.key, time: d.values[0].time } }; 
+    								}); 
+    	})
+    	.enter().append("g")
     		.attr("transform", function(d, i) { return "translate(" + cellSize * 6 + "," + (i+1) * (3.5* cellSize) +")";});
+
     memberBars.append("text")
     	.style("text-anchor", "middle")
     	.attr("class", "memberName")
     	.attr("transform", "translate(" + -3* cellSize + "," + cellSize  + ")")
     	.text(function(d) { return d.key; });
+
+ 	svg.append("rect")
+    	.attr("class", "today")
+  	    .attr("x", function() { return (dayshift(new Date) + 1)* cellSize + 5*cellSize; })
+  	  	.attr("height", function(d) { return (d.values[0].members.length * 4 + 3) * cellSize; })
+  	  	.attr("width", cellSize)
+  	  	.style("fill", "red");
 
  	var rect = memberBars.selectAll(".day")
  			.data(function(d) { 
@@ -120,8 +146,7 @@ d3.json("projects.json", function(error, data) {
  	 	 	.attr("width", cellSize)
  	  		.attr("height", cellSize)
  	  		.attr("x", function(d) { return dayshift(d.time) * cellSize; })
- 	  		.style("fill", function(d) { if(d.values) {
- 	  			return color(d.values.name); }});
+ 	  		.style("fill", function(d) { if(d.values) { return color(d.values.name); }});
  	
  	rect.on("mouseover", function(d) {      
             div.transition()        
@@ -148,13 +173,13 @@ d3.json("projects.json", function(error, data) {
     	.attr("transform", function(d, i) { 
     		return "translate(" + (i) * 31 * cellSize + "," + -.5*cellSize  + ")"; })
     	.text(function(d) { return formatMonth(d); });
-
+    
 });
 
 
 function daysSince(start) {
 	return function(x) {
-		return (x - start) / (1000 * 3600 * 24);
+		return Math.floor((x - start) / (1000 * 3600 * 24));
 	}
 }
 
